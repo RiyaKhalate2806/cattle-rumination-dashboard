@@ -132,7 +132,7 @@ for _ in range(1440):  # 1440 min/day
 
 # Dashboard with Streamlit
 st.title("Cattle Rumination Dashboard")
-daily_time = st.metric("Daily Rumination (min)", monitor.daily_rumination, "400-550")
+# daily_time = st.metric("Daily Rumination (min)", monitor.daily_rumination, "400-550")
 # WRONG - st.metric returns nothing:
 # daily_time = st.metric("Daily Rumination (min)", monitor.daily_rumination, "400-550")
 # if daily_time.value < 400:
