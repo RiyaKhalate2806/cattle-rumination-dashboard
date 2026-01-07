@@ -39,6 +39,7 @@ def extract_features(x, y, z, window_size=60, fs=1):  # fs=1 Hz assumed
 # Step 2: Generate synthetic training data (replace with real labeled data)
 np.random.seed(42)
 def generate_synthetic_data(n_samples=10000, window_size=60):
+    fs = 1 
     data = []
     labels = []
     for _ in range(n_samples):
