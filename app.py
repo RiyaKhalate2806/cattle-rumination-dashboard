@@ -54,7 +54,14 @@ def generate_synthetic_data(n_samples=10000, window_size=60):
 
 # Train model
 X_windows, y = generate_synthetic_data()
-X_features = np.array([extract_features(x[:360], x[360:720], x[720:]) for x in X_windows])  # Simulate
+X_windows_short = X_windows[:1000]  # Limit for Cloud
+X_features = []
+for x in X_windows_short:
+    if len(x) >= 1080:  # Ensure enough data
+        feats = extract_features(x[:360], x[360:720], x[720:1080])
+        X_features.append(feats)
+X_features = np.array(X_features)
+
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X_features)
 
@@ -75,10 +82,21 @@ class RuminationMonitor:
         self.start_time = datetime.now().replace(hour=0, minute=0, second=0)
     
     def predict_window(self, x, y, z):
-        feats = extract_features(x, y, z)
-        feats_scaled = self.scaler.transform(feats)
-        probs = self.model.predict_proba(feats_scaled)[:, 1]
-        return np.mean(probs > 0.5)  # Fraction ruminating
+    # Extract features safely
+    feats = extract_features(x[:360], y[:360], z[:360])
+    
+    # REMOVE NaN/Inf values - CRITICAL for scaler
+    feats = np.array(feats)
+    feats = np.nan_to_num(feats, nan=0.0, posinf=0.0, neginf=0.0)
+    
+    # Ensure correct shape for scaler
+    feats_scaled = self.scaler.transform(feats.reshape(1, -1))
+    
+    prediction = self.model.predict(feats_scaled)[0]
+    probability = self.model.predict_proba(feats_scaled)[0]
+    
+    return prediction, probability[1]
+
     
     def update_daily(self, is_ruminating, duration_min=1):
         if is_ruminating:
