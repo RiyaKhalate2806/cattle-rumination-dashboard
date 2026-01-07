@@ -9,32 +9,25 @@ from datetime import datetime, timedelta
 import streamlit as st
 
 # Step 1: Feature extraction function for x,y,z data (1-min windows)
-def extract_features(x, y, z, window_size=60, fs=1):  # fs=1 Hz assumed
-    """
-    Extract features from accelerometer data.
-    Assumes data is time-series with timestamps.
-    """
-    features = []
-    n_samples = len(x)
-    for i in range(0, n_samples - window_size + 1, window_size // 2):  # 50% overlap
-        window_x = x[i:i+window_size]
-        window_y = y[i:i+window_size]
-        window_z = z[i:i+window_size]
-        
-        # Time-domain features
-        feat = [
-            np.mean(window_x), np.std(window_x), np.max(window_x), np.min(window_x),
-            np.mean(window_y), np.std(window_y), np.max(window_y), np.min(window_y),
-            np.mean(window_z), np.std(window_z), np.max(window_z), np.min(window_z),
-            np.mean(np.abs(np.diff(window_x))), np.mean(np.abs(np.diff(window_y))), np.mean(np.abs(np.diff(window_z)))
-        ]
-        
-        # Magnitude
-        mag = np.sqrt(window_x**2 + window_y**2 + window_z**2)
-        feat += [np.mean(mag), np.std(mag)]
-        
-        features.append(feat)
-    return np.array(features)
+def extract_features(window_x, window_y, window_z):
+    # Safe array operations - handle empty arrays
+    mean_x = np.mean(window_x) if len(window_x) > 0 else 0
+    std_x = np.std(window_x) if len(window_x) > 0 else 0
+    max_x = np.max(window_x) if len(window_x) > 0 else 0
+    min_x = np.min(window_x) if len(window_x) > 0 else 0
+    
+    mean_y = np.mean(window_y) if len(window_y) > 0 else 0
+    std_y = np.std(window_y) if len(window_y) > 0 else 0
+    max_y = np.max(window_y) if len(window_y) > 0 else 0
+    min_y = np.min(window_y) if len(window_y) > 0 else 0
+    
+    mean_z = np.mean(window_z) if len(window_z) > 0 else 0
+    std_z = np.std(window_z) if len(window_z) > 0 else 0
+    max_z = np.max(window_z) if len(window_z) > 0 else 0
+    min_z = np.min(window_z) if len(window_z) > 0 else 0
+    
+    return [mean_x, std_x, max_x, min_x, mean_y, std_y, max_y, min_y, 
+            mean_z, std_z, max_z, min_z]
 
 # Step 2: Generate synthetic training data (replace with real labeled data)
 np.random.seed(42)
