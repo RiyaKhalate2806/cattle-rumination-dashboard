@@ -114,7 +114,7 @@ class RuminationMonitor:
         return prediction, probability[1]
 
 # Example usage
-monitor = RuminationMonitor(model, scaler)
+monitor = RuminationMonitor()  # CORRECT - no arguments
 # Simulate stream: replace with sensor data loop
 for _ in range(1440):  # 1440 min/day
     # Mock x,y,z (replace with real sensor read)
