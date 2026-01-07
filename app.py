@@ -109,7 +109,9 @@ class RuminationMonitor:
         return prediction, probability[1]
     
     def update_daily(self, is_rum):
-        self.daily_rumination += 1 if is_rum else 0  # Count rumination minutes
+    if is_rum:
+        st.session_state.daily_rumination_total += 1  # Use session state
+    st.session_state.rumination_counter += 1
 
 # Example usage
 monitor = RuminationMonitor()  # CORRECT - no arguments
@@ -132,18 +134,28 @@ for _ in range(1440):  # 1440 min/day
 
 # Dashboard with Streamlit
 st.title("Cattle Rumination Dashboard")
-# daily_time = st.metric("Daily Rumination (min)", monitor.daily_rumination, "400-550")
-# WRONG - st.metric returns nothing:
-# daily_time = st.metric("Daily Rumination (min)", monitor.daily_rumination, "400-550")
-# if daily_time.value < 400:
+# PERSISTENT STORAGE - survives reruns
+if 'daily_rumination_total' not in st.session_state:
+    st.session_state.daily_rumination_total = 0
+if 'rumination_counter' not in st.session_state:
+    st.session_state.rumination_counter = 0
 
-# CORRECT - Use the value DIRECTLY:
-# daily_rumination_min = monitor.daily_rumination
-st.metric("Daily Rumination (min)", daily_rumination_min, "400-550")
+# Use session state instead of class attribute
+daily_rumination_min = st.session_state.daily_rumination_total
+
+# SINGLE METRIC DISPLAY
+col1, col2 = st.columns([3, 1])
+with col1:
+    st.metric("Daily Rumination (min)", daily_rumination_min, "400-550")
+with col2:
+    st.caption(f"({st.session_state.rumination_counter} samples)")
+
+# Health status
 if daily_rumination_min < 400:
     st.error("🚨 VET ALERT: Low rumination detected!")
 else:
     st.success("✅ HEALTHY: Normal rumination")
+
 
 
 # Chart
