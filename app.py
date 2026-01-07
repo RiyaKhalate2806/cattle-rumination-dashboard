@@ -81,21 +81,22 @@ class RuminationMonitor:
         self.daily_rumination = 0
         self.start_time = datetime.now().replace(hour=0, minute=0, second=0)
     
-    def predict_window(self, x, y, z):
-    # Extract features safely
-    feats = extract_features(x[:360], y[:360], z[:360])
-    
-    # REMOVE NaN/Inf values - CRITICAL for scaler
-    feats = np.array(feats)
-    feats = np.nan_to_num(feats, nan=0.0, posinf=0.0, neginf=0.0)
-    
-    # Ensure correct shape for scaler
-    feats_scaled = self.scaler.transform(feats.reshape(1, -1))
-    
-    prediction = self.model.predict(feats_scaled)[0]
-    probability = self.model.predict_proba(feats_scaled)[0]
-    
-    return prediction, probability[1]
+       def predict_window(self, x, y, z):
+        # Extract features safely
+        feats = extract_features(x[:360], y[:360], z[:360])
+        
+        # REMOVE NaN/Inf values - CRITICAL for scaler
+        feats = np.array(feats)
+        feats = np.nan_to_num(feats, nan=0.0, posinf=0.0, neginf=0.0)
+        
+        # Ensure correct shape for scaler
+        feats_scaled = self.scaler.transform(feats.reshape(1, -1))
+        
+        prediction = self.model.predict(feats_scaled)[0]
+        probability = self.model.predict_proba(feats_scaled)[0]
+        
+        return prediction, probability[1]
+
 
     
     def update_daily(self, is_ruminating, duration_min=1):
