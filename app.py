@@ -119,13 +119,21 @@ class RuminationMonitor:
 # Example usage
 monitor = RuminationMonitor()  # CORRECT - no arguments
 # Simulate stream: replace with sensor data loop
+daily_rumination = []  # ADD THIS - initialize list
 for _ in range(1440):  # 1440 min/day
     # Mock x,y,z (replace with real sensor read)
     x = np.random.randn(60) * 0.5 + 0.5 * np.sin(np.arange(60) * 0.1)
     y = np.random.randn(60) * 0.3
     z = np.ones(60) * 0.9 + np.random.randn(60) * 0.1
-    is_rum = monitor.predict_window(x, y, z)
-    monitor.update_daily(is_rum > 0.5)
+    
+    is_rum, confidence = monitor.predict_window(x, y, z)  # Returns tuple
+    daily_rumination.append(is_rum)  # COLLECT rumination data
+    
+    # Update every 60 minutes (not every minute)
+    if len(daily_rumination) % 60 == 0:
+        avg_rum = np.mean(daily_rumination[-60:])  # Last hour average
+        monitor.update_daily(avg_rum > 0.5)
+
 
 # Dashboard with Streamlit
 st.title("Cattle Rumination Dashboard")
