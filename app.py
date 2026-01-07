@@ -115,124 +115,121 @@ class RuminationMonitor:
     st.session_state.rumination_counter += 1
 
 # Example usage
+# Example usage - NON-BLOCKING simulation
 monitor = RuminationMonitor()  # CORRECT - no arguments
-# Simulate stream: replace with sensor data loop
-daily_rumination = []  # ADD THIS - initialize list
-for _ in range(1440):  # 1440 min/day
-    # Mock x,y,z (replace with real sensor read)
-    x = np.random.randn(60) * 0.5 + 0.5 * np.sin(np.arange(60) * 0.1)
-    y = np.random.randn(60) * 0.3
-    z = np.ones(60) * 0.9 + np.random.randn(60) * 0.1
-    
-    is_rum, confidence = monitor.predict_window(x, y, z)  # Returns tuple
-    daily_rumination.append(is_rum)  # COLLECT rumination data
-    
-    # Update every 60 minutes (not every minute)
-    if len(daily_rumination) % 60 == 0:
-        avg_rum = np.mean(daily_rumination[-60:])  # Last hour average
-        monitor.update_daily(avg_rum > 0.5)
 
-
-# ========================================
-# BARAMATI CATTLE RUMINATION MONITORING
-# ========================================
-st.set_page_config(page_title="🐄 Cattle Health", layout="wide")
-st.title("🐄 Cattle Rumination Dashboard")
-st.markdown("---")
-
-# ========================================
-# PERSISTENT STATE - Survives Streamlit reruns
-# ========================================
-if 'daily_rumination_total' not in st.session_state:
-    st.session_state.daily_rumination_total = 0
-if 'rumination_counter' not in st.session_state:
-    st.session_state.rumination_counter = 0
-if 'is_monitoring' not in st.session_state:
-    st.session_state.is_monitoring = False
-if 'start_time' not in st.session_state:
-    st.session_state.start_time = st.time()
-
-# Current values
-daily_rumination_min = st.session_state.daily_rumination_total
-sample_count = st.session_state.rumination_counter
-
-# ========================================
-# CONTROL PANEL
-# ========================================
-col1, col2, col3 = st.columns([1, 1, 2])
-with col1:
-    if st.button("🚀 Start Monitoring", type="primary"):
-        st.session_state.is_monitoring = True
-        st.session_state.start_time = st.time()
-        st.rerun()
-    
-with col2:
-    if st.button("🛑 Stop Monitoring"):
-        st.session_state.is_monitoring = False
-        st.rerun()
-
-with col3:
-    st.info(f"📊 Monitoring: {'🟢 LIVE' if st.session_state.is_monitoring else '🔴 STOPPED'} | "
-            f"⏱️ Uptime: {(st.time() - st.session_state.start_time).total_seconds()//60:.0f} min")
-
-# ========================================
-# KEY METRICS - SINGLE CLEAN DISPLAY
-# ========================================
-col1, col2 = st.columns(2)
-with col1:
-    st.metric("🐄 Daily Rumination (min)", 
-              f"{daily_rumination_min}",
-              "400-550",
-              delta=None)
-    
-with col2:
-    st.metric("📈 Samples Processed", 
-              f"{sample_count:,}",
-              "1440 target")
-
-# ========================================
-# HEALTH STATUS - Clear Alerts
-# ========================================
-st.markdown("### 🏥 Health Status")
-if daily_rumination_min < 400:
-    st.error("🚨 **VET ALERT**: Low rumination detected! Check cow immediately!")
-elif daily_rumination_min >= 400 and daily_rumination_min <= 550:
-    st.success("✅ **HEALTHY**: Normal rumination levels")
-else:
-    st.warning("⚠️ **MONITOR**: High rumination detected")
-
-# ========================================
-# PROGRESS BAR - Visual Feedback
-# ========================================
-progress_col1, progress_col2 = st.columns([3,1])
-with progress_col1:
-    st.progress(min(daily_rumination_min / 550, 1.0))
-with progress_col2:
-    st.caption("Normal range")
-
-# ========================================
-# LIVE SIMULATION STATUS
-# ========================================
+# REAL-TIME SIMULATION (runs 1 iteration per page refresh)
 if st.session_state.is_monitoring:
-    # Simulate 1 minute of data every 0.5s (1440 min/day simulation)
+    # Mock x,y,z accelerometer data (60 seconds @ 1Hz)
     x = np.random.randn(60) * 0.5 + 0.5 * np.sin(np.arange(60) * 0.1)
     y = np.random.randn(60) * 0.3
     z = np.ones(60) * 0.9 + np.random.randn(60) * 0.1
     
+    # ML Prediction (returns prediction, confidence)
     is_rum, confidence = monitor.predict_window(x, y, z)
     
+    # UPDATE SESSION STATE DIRECTLY (no daily_rumination list needed)
     if is_rum > 0.5:  # Rumination detected
         st.session_state.daily_rumination_total += 1
     st.session_state.rumination_counter += 1
     
-    # Auto-rerun every 0.5 seconds during monitoring
-    time.sleep(0.5)
+    # Refresh every 1 second
+    time.sleep(1)
+    st.rerun()
+    
+# ========================================
+# BARAMATI CATTLE RUMINATION DASHBOARD
+# ========================================
+st.set_page_config(page_title="🐄 Baramati Cattle Health", layout="wide")
+
+# ONLY RUN ONCE - Initialize state
+if 'initialized' not in st.session_state:
+    st.session_state.daily_rumination_total = 0
+    st.session_state.rumination_counter = 0
+    st.session_state.is_monitoring = False
+    st.session_state.initialized = True
+
+st.title("🐄 Baramati Cattle Rumination Dashboard")
+st.markdown("---")
+
+# ========================================
+# CONTROL BUTTONS - UNIQUE KEYS
+# ========================================
+col1, col2, col3 = st.columns([1, 1, 2])
+
+with col1:
+    if st.button("🚀 Start Monitoring", key="start_btn", type="primary"):
+        st.session_state.is_monitoring = True
+        st.rerun()
+
+with col2:
+    if st.button("🛑 Stop Monitoring", key="stop_btn"):
+        st.session_state.is_monitoring = False
+        st.rerun()
+
+with col3:
+    monitoring_status = "🟢 LIVE" if st.session_state.is_monitoring else "🔴 STOPPED"
+    st.info(f"📊 Status: {monitoring_status} | "
+            f"📈 Samples: {st.session_state.rumination_counter:,} | "
+            f"⏱️ Rumination: {st.session_state.daily_rumination_total} min")
+
+# ========================================
+# ONE SINGLE METRIC - KEY PREVENTS DUPLICATES
+# ========================================
+st.markdown("### 📊 Key Metrics")
+col1, col2 = st.columns(2)
+
+with col1:
+    st.metric("🐄 Daily Rumination (min)", 
+              st.session_state.daily_rumination_total,
+              "400-550 Healthy Range",
+              key="rumination_metric")  # UNIQUE KEY = NO DUPLICATES!
+
+with col2:
+    st.metric("🔄 Samples Processed", 
+              st.session_state.rumination_counter,
+              "1440/day target",
+              key="samples_metric")
+
+# ========================================
+# HEALTH STATUS - CRISP ALERTS
+# ========================================
+st.markdown("### 🏥 Cow Health Status")
+rumination = st.session_state.daily_rumination_total
+
+if rumination < 400:
+    st.error("🚨 **CRITICAL VET ALERT** - Low rumination! Check cow NOW!")
+elif 400 <= rumination <= 550:
+    st.success("✅ **HEALTHY COW** - Normal rumination detected")
+else:
+    st.warning("⚠️ **MONITOR CLOSELY** - High rumination activity")
+
+# ========================================
+# SIMULATION - RUNS ONLY WHEN MONITORING
+# ========================================
+if st.session_state.is_monitoring:
+    # Simulate 1 minute of accelerometer data
+    x = np.random.randn(60) * 0.5 + 0.5 * np.sin(np.arange(60) * 0.1)
+    y = np.random.randn(60) * 0.3
+    z = np.ones(60) * 0.9 + np.random.randn(60) * 0.1
+    
+    # ML Prediction
+    is_rum, confidence = monitor.predict_window(x, y, z)
+    
+    # Update counters
+    if is_rum > 0.5:
+        st.session_state.daily_rumination_total += 1
+    st.session_state.rumination_counter += 1
+    
+    # Refresh every second
+    time.sleep(1)
     st.rerun()
 else:
-    st.info("👆 Click **Start Monitoring** to begin real-time rumination tracking")
+    st.info("👆 **Click START MONITORING** to begin live cattle tracking")
+    st.stop()  # STOP EXECUTION - PREVENTS DUPLICATES!
 
 st.markdown("---")
-st.caption("🌍 Live worldwide access | 📱 Mobile-ready for farm team | 🐄 Cattle Health System")
+st.caption("🌍 24/7 Global Access | 📱 Farm Manager Mobile | 🐄 Baramati Cattle Health System v2.0")
 
 # Chart
 fig, ax = plt.subplots()
