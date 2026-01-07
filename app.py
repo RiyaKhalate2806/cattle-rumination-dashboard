@@ -133,10 +133,18 @@ for _ in range(1440):  # 1440 min/day
 # Dashboard with Streamlit
 st.title("Cattle Rumination Dashboard")
 daily_time = st.metric("Daily Rumination (min)", monitor.daily_rumination, "400-550")
-if daily_time.value < 400:
-    st.error("ALERT: Below healthy range!")
+# WRONG - st.metric returns nothing:
+# daily_time = st.metric("Daily Rumination (min)", monitor.daily_rumination, "400-550")
+# if daily_time.value < 400:
+
+# CORRECT - Use the value DIRECTLY:
+daily_rumination_min = monitor.daily_rumination
+st.metric("Daily Rumination (min)", daily_rumination_min, "400-550")
+if daily_rumination_min < 400:
+    st.error("🚨 VET ALERT: Low rumination detected!")
 else:
-    st.success("Healthy rumination!")
+    st.success("✅ HEALTHY: Normal rumination")
+
 
 # Chart
 fig, ax = plt.subplots()
