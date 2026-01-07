@@ -138,7 +138,7 @@ st.title("Cattle Rumination Dashboard")
 # if daily_time.value < 400:
 
 # CORRECT - Use the value DIRECTLY:
-daily_rumination_min = monitor.daily_rumination
+# daily_rumination_min = monitor.daily_rumination
 st.metric("Daily Rumination (min)", daily_rumination_min, "400-550")
 if daily_rumination_min < 400:
     st.error("🚨 VET ALERT: Low rumination detected!")
