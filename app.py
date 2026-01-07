@@ -74,47 +74,35 @@ print(classification_report(y_test, model.predict(X_test)))
 
 # Step 3: Real-time prediction and daily aggregation
 class RuminationMonitor:
-    def __init__(self, model, scaler, healthy_min=400):  # minutes/day
-        self.model = model
-        self.scaler = scaler
-        self.healthy_min = healthy_min
-        self.daily_rumination = 0
-        self.start_time = datetime.now().replace(hour=0, minute=0, second=0)
-    
-       def predict_window(self, x, y, z):
-        # Extract features safely
-        feats = extract_features(x[:360], y[:360], z[:360])
+    def __init__(self):
+        # Generate or load data
+        X_windows, y = generate_synthetic_data()
+        X_windows_short = X_windows[:1000]  # Limit for Cloud
+        X_features = []
+        for x in X_windows_short:
+            if len(x) >= 1080:
+                feats = extract_features(x[:360], x[360:720], x[720:1080])
+                X_features.append(feats)
+        X_features = np.array(X_features)
+        y_short = y[:1000]
         
-        # REMOVE NaN/Inf values - CRITICAL for scaler
+        # Remove NaN before scaling
+        X_features = np.nan_to_num(X_features, nan=0.0, posinf=0.0, neginf=0.0)
+        
+        # Train model
+        self.scaler = StandardScaler()
+        X_scaled = self.scaler.fit_transform(X_features)
+        self.model = RandomForestClassifier(n_estimators=100, random_state=42)
+        self.model.fit(X_scaled, y_short)
+    
+    def predict_window(self, x, y, z):
+        feats = extract_features(x[:360], y[:360], z[:360])
         feats = np.array(feats)
         feats = np.nan_to_num(feats, nan=0.0, posinf=0.0, neginf=0.0)
-        
-        # Ensure correct shape for scaler
         feats_scaled = self.scaler.transform(feats.reshape(1, -1))
-        
         prediction = self.model.predict(feats_scaled)[0]
         probability = self.model.predict_proba(feats_scaled)[0]
-        
         return prediction, probability[1]
-
-
-    
-    def update_daily(self, is_ruminating, duration_min=1):
-        if is_ruminating:
-            self.daily_rumination += duration_min
-        if (datetime.now() - self.start_time).total_seconds() / 3600 >= 24:
-            self.check_alert()
-            self.reset_daily()
-    
-    def check_alert(self):
-        if self.daily_rumination < self.healthy_min:
-            print(f"ALERT: Low rumination! {self.daily_rumination} min (healthy: {self.healthy_min}+)")
-        else:
-            print(f"Healthy: {self.daily_rumination} min")
-    
-    def reset_daily(self):
-        self.daily_rumination = 0
-        self.start_time = datetime.now().replace(hour=0, minute=0, second=0)
 
 # Example usage
 monitor = RuminationMonitor(model, scaler)
