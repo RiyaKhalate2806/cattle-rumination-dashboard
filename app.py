@@ -75,10 +75,8 @@ print(classification_report(y_test, model.predict(X_test)))
 # Step 3: Real-time prediction and daily aggregation
 class RuminationMonitor:
     def __init__(self):
-        # Generate data with guaranteed valid windows
+        self.daily_rumination = 0  # ADD THIS - tracks daily total
         X_windows, y = generate_synthetic_data(n_samples=500, window_size=1080)
-        
-        # Extract features SAFELY
         X_features = []
         y_short = []
         for i, x in enumerate(X_windows):
@@ -90,15 +88,13 @@ class RuminationMonitor:
                 except:
                     continue
         
-        # CRITICAL: Ensure we have data
         if len(X_features) == 0:
             print("Warning: No valid features extracted, using dummy data")
-            X_features = np.random.randn(100, 12)  # 12 features
+            X_features = np.random.randn(100, 12)
             y_short = np.random.randint(0, 2, 100)
         else:
             X_features = np.nan_to_num(np.array(X_features), nan=0.0, posinf=0.0, neginf=0.0)
         
-        # Train model
         self.scaler = StandardScaler()
         X_scaled = self.scaler.fit_transform(X_features)
         self.model = RandomForestClassifier(n_estimators=50, random_state=42)
@@ -113,8 +109,7 @@ class RuminationMonitor:
         return prediction, probability[1]
     
     def update_daily(self, is_rum):
-        # Dummy method to satisfy line 125 - does nothing
-        pass
+        self.daily_rumination += 1 if is_rum else 0  # Count rumination minutes
 
 # Example usage
 monitor = RuminationMonitor()  # CORRECT - no arguments
